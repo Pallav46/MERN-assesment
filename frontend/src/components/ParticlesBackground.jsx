@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import Particles from 'react-particles';
-import { loadFull } from 'tsparticles';
+import { loadSlim } from 'tsparticles-slim'; // Changed from loadFull to loadSlim
 
 const ParticlesBackground = () => {
   const particlesInit = useCallback(async (engine) => {
-    await loadFull(engine);
+    await loadSlim(engine); // Changed to loadSlim
   }, []);
 
   return (
@@ -13,115 +13,72 @@ const ParticlesBackground = () => {
       init={particlesInit}
       options={{
         background: {
-          color: {
-            value: "#fff",
+          color: "#fff",
+        },
+        fpsLimit: 120,
+        interactivity: {
+          events: {
+            onClick: {
+              enable: true,
+              mode: "push",
+            },
+            onHover: {
+              enable: true,
+              mode: "repulse",
+            },
+          },
+          modes: {
+            push: {
+              quantity: 4,
+            },
+            repulse: {
+              distance: 100,
+              duration: 0.4,
+            },
           },
         },
         particles: {
+          color: {
+            value: ["#1E90FF", "#FF6347", "#FFD700", "#9370DB", "#32CD32"],
+          },
+          move: {
+            direction: "none",
+            enable: true,
+            outModes: {
+              default: "out",
+            },
+            random: true,
+            speed: { min: 0.5, max: 2 },
+            straight: false,
+          },
           number: {
-            value: 100,
             density: {
               enable: true,
-              value_area: 800
-            }
-          },
-          color: {
-            value: ["#1E90FF", "#FF6347", "#FFD700", "#9370DB", "#32CD32"]
-          },
-          shape: {
-            type: ["circle", "triangle", "star"],
-            options: {
-              star: {
-                sides: 5
-              }
-            }
+              area: 800,
+            },
+            value: 80,
           },
           opacity: {
             value: { min: 0.1, max: 0.5 },
             animation: {
               enable: true,
               speed: 1,
-              sync: false
-            }
+              sync: false,
+            },
+          },
+          shape: {
+            type: ["circle", "triangle"],
           },
           size: {
             value: { min: 1, max: 5 },
             animation: {
               enable: true,
               speed: 4,
-              minimumValue: 0.3,
-              sync: false
-            }
-          },
-          move: {
-            enable: true,
-            speed: { min: 0.5, max: 2 },
-            direction: "none",
-            random: true,
-            straight: false,
-            outModes: {
-              default: "out"
+              sync: false,
             },
-            attract: {
-              enable: true,
-              rotateX: 600,
-              rotateY: 1200
-            }
           },
-          wobble: {
-            enable: true,
-            distance: 10,
-            speed: 5
-          },
-          zIndex: {
-            value: { min: 0, max: 100 },
-            opacityRate: 7,
-            sizeRate: 2,
-            velocityRate: 2
-          }
         },
-        interactivity: {
-          detectsOn: "canvas",
-          events: {
-            onHover: {
-              enable: true,
-              mode: "bubble",
-              parallax: {
-                enable: true,
-                force: 60,
-                smooth: 10
-              }
-            },
-            onClick: {
-              enable: true,
-              mode: "push"
-            },
-            resize: true
-          },
-          modes: {
-            bubble: {
-              distance: 200,
-              size: 15,
-              duration: 2,
-              opacity: 0.8,
-              speed: 3
-            },
-            push: {
-              quantity: 4
-            },
-            repulse: {
-              distance: 100,
-              duration: 0.4
-            }
-          }
-        },
-        retina_detect: true,
-        motion: {
-          reduce: {
-            factor: 4,
-            value: true
-          }
-        }
+        detectRetina: true,
       }}
       style={{
         position: 'fixed',

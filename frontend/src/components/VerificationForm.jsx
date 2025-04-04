@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
-import ParticlesBackground from './ParticlesBackground';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiUpload, FiX, FiCheck, FiUser, FiMail, FiHome, FiFile, FiCalendar } from 'react-icons/fi';
+import ParticlesBackground from './ParticlesBackground';
+import { toast, Toaster } from 'react-hot-toast';
 
 export default function VerificationForm() {
   const { 
@@ -24,7 +25,7 @@ export default function VerificationForm() {
 
   const onFileChange = (e) => {
     const files = Array.from(e.target.files);
-    const updatedFiles = [...selectedFiles, ...files].slice(0, 5); // Limit to 5 files
+    const updatedFiles = [...selectedFiles, ...files].slice(0, 5);
     setSelectedFiles(updatedFiles);
     setValue('documents', updatedFiles, { shouldValidate: true });
     e.target.value = '';
@@ -38,7 +39,7 @@ export default function VerificationForm() {
 
   const onSubmit = async (data) => {
     if (!data.documents || data.documents.length < 2) {
-      alert("Please upload at least 2 documents");
+      toast.error("Please upload at least 2 documents");
       return;
     }
 
@@ -47,7 +48,7 @@ export default function VerificationForm() {
     
     Object.entries(data).forEach(([key, value]) => {
       if (key !== 'documents') {
-        if (typeof value === 'object') {
+        if (typeof value === 'object' && value !== null) {
           formData.append(key, JSON.stringify(value));
         } else {
           formData.append(key, value);
@@ -61,14 +62,12 @@ export default function VerificationForm() {
 
     try {
       await axios.post('/api/candidates/submit', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      alert('Application submitted successfully!');
+      toast.success('Application submitted successfully!');
       setSelectedFiles([]);
     } catch (error) {
-      alert(error.response?.data?.error || 'Submission failed. Please try again.');
+      toast.error(error.response?.data?.error || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +76,8 @@ export default function VerificationForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 relative overflow-hidden">
       <ParticlesBackground />
-      
+      <Toaster position="top-right" />
+
       <motion.main 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -95,50 +95,35 @@ export default function VerificationForm() {
             <p className="text-gray-600">Please fill in all required fields</p>
           </header>
 
-          {/* Personal Information Section */}
+          {/* Personal Info */}
           <section className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 flex items-center">
               <FiUser className="mr-2" /> Personal Information
             </h2>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUser className="text-gray-400" />
-                  </div>
-                  <input
-                    {...register('firstName', { required: true })}
-                    className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                {errors.firstName && (
-                  <p className="text-red-500 text-sm mt-1">This field is required</p>
-                )}
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUser className="text-gray-400" />
+            <div className="grid gap-6 md:grid-cols-2">
+              {['firstName', 'lastName'].map((field, index) => (
+                <div key={index}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {field === 'firstName' ? 'First Name *' : 'Last Name *'}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiUser className="text-gray-400" />
+                    </div>
+                    <input
+                      {...register(field, { required: true })}
+                      className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
-                  <input
-                    {...register('lastName', { required: true })}
-                    className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  {errors[field] && (
+                    <p className="text-red-500 text-sm mt-1">This field is required</p>
+                  )}
                 </div>
-                {errors.lastName && (
-                  <p className="text-red-500 text-sm mt-1">This field is required</p>
-                )}
-              </div>
+              ))}
             </div>
 
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address *
@@ -161,6 +146,7 @@ export default function VerificationForm() {
               )}
             </div>
 
+            {/* DOB */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Date of Birth *
@@ -184,39 +170,27 @@ export default function VerificationForm() {
             </div>
           </section>
 
-          {/* Address Section */}
+          {/* Address Info */}
           <section className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 flex items-center">
               <FiHome className="mr-2" /> Address Information
             </h2>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-700">
-                Residential Address
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="relative">
+              <h3 className="text-lg font-medium text-gray-700">Residential Address</h3>
+
+              {['street1', 'street2'].map((street, i) => (
+                <div className="relative" key={i}>
                   <input
-                    {...register('residentialAddress.street1', { required: true })}
-                    placeholder="Street Address 1 *"
+                    {...register(`residentialAddress.${street}`, { required: true })}
+                    placeholder={`Street Address ${i + 1} *`}
                     className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FiHome className="text-gray-400" />
                   </div>
                 </div>
-                <div className="relative">
-                  <input
-                    {...register('residentialAddress.street2', { required: true })}
-                    placeholder="Street Address 2 *"
-                    className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300"
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiHome className="text-gray-400" />
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="flex items-center space-x-3">
@@ -237,37 +211,24 @@ export default function VerificationForm() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-4"
               >
-                <h3 className="text-lg font-medium text-gray-700">
-                  Permanent Address
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="relative">
+                <h3 className="text-lg font-medium text-gray-700">Permanent Address</h3>
+                {['street1', 'street2'].map((street, i) => (
+                  <div className="relative" key={i}>
                     <input
-                      {...register('permanentAddress.street1', { required: !sameAddress })}
-                      placeholder="Street Address 1 *"
+                      {...register(`permanentAddress.${street}`, { required: !sameAddress })}
+                      placeholder={`Street Address ${i + 1} *`}
                       className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300"
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FiHome className="text-gray-400" />
                     </div>
                   </div>
-                  <div className="relative">
-                    <input
-                      {...register('permanentAddress.street2', { required: !sameAddress })}
-                      placeholder="Street Address 2 *"
-                      className="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300"
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FiHome className="text-gray-400" />
-                    </div>
-                  </div>
-                </div>
+                ))}
               </motion.div>
             )}
           </section>
 
-          {/* Documents Section */}
+          {/* Document Upload */}
           <section className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 flex items-center">
               <FiFile className="mr-2" /> Document Upload
@@ -277,63 +238,40 @@ export default function VerificationForm() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Documents (Minimum 2) *
               </label>
-              
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    JPEG, PNG, PDF (Max 5MB each)
-                  </p>
+                  <p className="text-sm text-gray-500">Click to upload or drag & drop</p>
                 </div>
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   onChange={onFileChange}
-                  multiple
                   className="hidden"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png"
                 />
               </label>
-              
-              {errors.documents && (
-                <p className="text-red-500 text-sm">
-                  At least 2 valid documents are required
-                </p>
-              )}
-              
-              {selectedFiles.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700">Selected files:</h4>
-                  <ul className="space-y-2">
-                    {selectedFiles.map((file, index) => (
-                      <li key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center space-x-3">
-                          <FiFile className="text-gray-500" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-700 truncate max-w-xs">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {(file.size / 1024).toFixed(2)} KB
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(index)}
-                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-                        >
-                          <FiX />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+
+              {/* Selected files */}
+              <ul className="space-y-2">
+                {selectedFiles.map((file, index) => (
+                  <li key={index} className="flex items-center justify-between text-sm bg-gray-100 px-3 py-2 rounded-lg">
+                    <span className="truncate">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <FiX />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
 
+          {/* Submit */}
+          <div className="flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || selectedFiles.length < 2}
@@ -357,6 +295,7 @@ export default function VerificationForm() {
               </>
             )}
           </button>
+          </div>
         </form>
       </motion.main>
     </div>
